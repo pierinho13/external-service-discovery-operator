@@ -152,6 +152,18 @@ For a detailed comparison and practical scenarios, see [When should I use this o
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
-## Project boundaries
+##Non-goals
 
-The current operator scope deliberately excludes cloud APIs, SRV records, custom DNS servers, TTL-aware or per-resource refresh scheduling, IPv6 EndpointSlices, health checking, Traefik or Gateway API CRDs, proxies, VM agents, and finalizers.
+External Service Discovery Operator is intentionally focused on one thing: keeping Kubernetes `Service` and `EndpointSlice` resources synchronized with workloads that run outside the cluster.
+
+It does not provide:
+
+- Traffic proxying or load balancing
+- Active health checks
+- Service mesh functionality
+- Cloud inventory discovery by labels or tags
+- Ingress, Traefik, or Gateway API resource management
+- VM agents or sidecars
+
+The operator stays in the control plane and leaves traffic handling to Kubernetes consumers such as Traefik, Gateway API implementations, or applications using the generated `Service`.
+
