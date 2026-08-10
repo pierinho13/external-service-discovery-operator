@@ -1,5 +1,7 @@
 # External Service Discovery Operator
 
+Kubernetes-native service discovery for external workloads.
+
 [![CI](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/ci.yaml)
 [![Lint](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/lint.yml/badge.svg)](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/lint.yml)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/pierinho13/external-service-discovery-operator)](https://github.com/pierinho13/external-service-discovery-operator)
@@ -9,11 +11,13 @@
 [![Kubernetes Operator](https://img.shields.io/badge/Kubernetes-Operator-326CE5?logo=kubernetes&logoColor=white)](docs/getting-started.md)
 [![Helm OCI](https://img.shields.io/badge/Helm-OCI-0F1689?logo=helm&logoColor=white)](charts/external-service-discovery-operator/README.md)
 
+
+
 This Kubernetes operator discovers workloads running outside Kubernetes and projects them into native, selectorless `Service` and `EndpointSlice` resources. Kubernetes consumers such as Traefik, Gateway API implementations, ingress controllers, and workloads can consume the generated Service when their implementation supports selectorless Service endpoints.
 
 The operator is a control plane only: it contains no proxy or data plane, performs no load balancing, and creates no ingress-controller-specific resources.
 
-<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/a1f3737e-fa77-4a88-99f2-601f30b7edc2" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/f896ff69-6bbb-4e4c-84bc-9203342fbcf6" />
 
 
 ## Architecture
