@@ -20,7 +20,7 @@ The operator is a control plane only: it contains no proxy or data plane, perfor
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9c6c6d43-ad66-4426-bf9b-4bc59a8038ed" />
 
 
-
+⭐ Drop a star to support External Service Discovery Operator ⭐
 
 ## Architecture
 
