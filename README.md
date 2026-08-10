@@ -1,1 +1,0 @@
-# external-service-discovery-operator
