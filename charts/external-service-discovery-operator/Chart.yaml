@@ -17,7 +17,7 @@ annotations:
   artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: Full Lifecycle
   artifacthub.io/signKey: |
-    fingerprint: DBBC4A49D2BB68565A9BCC383CA8825330932B17
+    fingerprint: 5D2328C92EADA88FAED2B1CDD4BF68003E6FB303
     url: https://raw.githubusercontent.com/pierinho13/external-service-discovery-operator/main/helm-signing-key.asc
   artifacthub.io/links: |
     - name: Source
