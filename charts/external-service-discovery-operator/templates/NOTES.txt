@@ -1,0 +1,4 @@
+The External Service Discovery Operator is installed.
+
+Inspect it with:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}

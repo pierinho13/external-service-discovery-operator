@@ -1,0 +1,6 @@
+namespace: external-service-discovery-operator-system
+namePrefix: external-service-discovery-operator-
+resources:
+- ../crd
+- ../rbac
+- ../manager

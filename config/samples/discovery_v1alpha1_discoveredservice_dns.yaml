@@ -1,0 +1,16 @@
+apiVersion: discovery.k8sready.com/v1alpha1
+kind: DiscoveredService
+metadata:
+  name: tomcat-dns
+  namespace: default
+spec:
+  discovery:
+    dns:
+      names:
+      - tomcat-01.internal.example.com
+      - tomcat-02.internal.example.com
+      - tomcat-03.internal.example.com
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP

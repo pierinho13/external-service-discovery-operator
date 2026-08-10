@@ -1,0 +1,26 @@
+apiVersion: v2
+name: external-service-discovery-operator
+description: Kubernetes-native discovery of external workloads through Service and EndpointSlice resources
+type: application
+version: 0.0.0
+appVersion: "v0.0.0"
+home: https://github.com/pierinho13/external-service-discovery-operator
+sources:
+  - https://github.com/pierinho13/external-service-discovery-operator
+maintainers:
+  - name: pierinho13
+    url: https://github.com/pierinho13
+keywords: [kubernetes, operator, service-discovery, endpointslice, dns]
+annotations:
+  artifacthub.io/category: networking
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: Full Lifecycle
+  artifacthub.io/signKey: |
+    fingerprint: DBBC4A49D2BB68565A9BCC383CA8825330932B17
+    url: https://raw.githubusercontent.com/pierinho13/external-service-discovery-operator/main/helm-signing-key.asc
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/pierinho13/external-service-discovery-operator
+    - name: Documentation
+      url: https://github.com/pierinho13/external-service-discovery-operator#documentation

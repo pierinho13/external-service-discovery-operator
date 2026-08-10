@@ -1,0 +1,16 @@
+domain: k8sready.com
+layout:
+- go.kubebuilder.io/v4
+projectName: external-service-discovery-operator
+repo: github.com/pierinho13/external-service-discovery-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: k8sready.com
+  group: discovery
+  kind: DiscoveredService
+  path: github.com/pierinho13/external-service-discovery-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
