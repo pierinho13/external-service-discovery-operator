@@ -17,7 +17,8 @@ This Kubernetes operator discovers workloads running outside Kubernetes and proj
 
 The operator is a control plane only: it contains no proxy or data plane, performs no load balancing, and creates no ingress-controller-specific resources.
 
-<img width="1535" height="1024" alt="image" src="https://github.com/user-attachments/assets/f8099d5c-1c62-4d9f-b92e-0154698b7a79" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9c6c6d43-ad66-4426-bf9b-4bc59a8038ed" />
+
 
 
 
