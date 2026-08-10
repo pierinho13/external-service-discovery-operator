@@ -152,7 +152,7 @@ For a detailed comparison and practical scenarios, see [When should I use this o
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
-##Non-goals
+## Non-goals
 
 External Service Discovery Operator is intentionally focused on one thing: keeping Kubernetes `Service` and `EndpointSlice` resources synchronized with workloads that run outside the cluster.
 
