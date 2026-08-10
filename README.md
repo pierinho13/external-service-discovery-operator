@@ -2,8 +2,12 @@
 
 [![CI](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/ci.yaml)
 [![Lint](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/lint.yml/badge.svg)](https://github.com/pierinho13/external-service-discovery-operator/actions/workflows/lint.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/pierinho13/external-service-discovery-operator)](https://github.com/pierinho13/external-service-discovery-operator)
+[![GitHub Release](https://img.shields.io/github/v/release/pierinho13/external-service-discovery-operator?display_name=tag&sort=semver)](https://github.com/pierinho13/external-service-discovery-operator/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pierinho13/external-service-discovery-operator)](https://goreportcard.com/report/github.com/pierinho13/external-service-discovery-operator)
 [![License](https://img.shields.io/github/license/pierinho13/external-service-discovery-operator)](LICENSE)
+[![Kubernetes Operator](https://img.shields.io/badge/Kubernetes-Operator-326CE5?logo=kubernetes&logoColor=white)](docs/getting-started.md)
+[![Helm OCI](https://img.shields.io/badge/Helm-OCI-0F1689?logo=helm&logoColor=white)](charts/external-service-discovery-operator/README.md)
 
 This Kubernetes operator discovers workloads running outside Kubernetes and projects them into native, selectorless `Service` and `EndpointSlice` resources. Kubernetes consumers such as Traefik, Gateway API implementations, ingress controllers, and workloads can consume the generated Service when their implementation supports selectorless Service endpoints.
 
