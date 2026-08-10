@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/pierinho13/external-service-discovery-operator)](https://goreportcard.com/report/github.com/pierinho13/external-service-discovery-operator)
 [![License](https://img.shields.io/github/license/pierinho13/external-service-discovery-operator)](LICENSE)
 
-This Kubernetes operator discovers workloads running outside Kubernetes and projects them into native, selectorless `Service` and `EndpointSlice` resources. Kubernetes consumers such as Traefik, Gateway API implementations, and NGINX can use the generated Service normally.
+This Kubernetes operator discovers workloads running outside Kubernetes and projects them into native, selectorless `Service` and `EndpointSlice` resources. Kubernetes consumers such as Traefik, Gateway API implementations, ingress controllers, and workloads can consume the generated Service when their implementation supports selectorless Service endpoints.
 
 The operator is a control plane only: it contains no proxy or data plane, performs no load balancing, and creates no ingress-controller-specific resources.
 
@@ -119,11 +119,20 @@ EndpointSlice: 10.140.0.11, 10.140.0.12, 10.140.0.13
 
 Unlike an `ExternalName` Service, which delegates resolution to each DNS client, this operator resolves names and materializes every discovered address into an EndpointSlice. DNS resources refresh every minute by default; configure the controller-wide period with `--discovery-refresh-interval`. If any name fails or produces no usable IPv4 address, discovery fails closed: the existing EndpointSlice and its endpoint count remain unchanged while `Ready=False` reports `DiscoveryFailed`.
 
+## Why not just use ExternalName?
+
+`ExternalName` and `DiscoveredService` solve related but different problems. An `ExternalName` Service exposes a DNS alias and leaves name resolution to consumers. This operator resolves DNS itself and represents the resulting IPv4 addresses as a selectorless Service plus a Kubernetes `EndpointSlice`.
+
+`ExternalName` is usually the simpler choice when a Service name only needs to point to an external hostname. Use `DiscoveredService` when materializing concrete external addresses as Kubernetes-native endpoints is itself useful, for example when one name represents several backends or addresses change behind stable DNS names.
+
+For a detailed comparison and practical scenarios, see [When should I use this operator?](docs/use-cases.md).
+
 `make test` runs both fast unit tests and the envtest integration suite. The `setup-envtest` helper downloads the Kubernetes API server and etcd binaries into its standard user data directory; override `ENVTEST_K8S_VERSION` when a different Kubernetes version is required.
 
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
+- [Use cases and ExternalName comparison](docs/use-cases.md)
 - [Development](docs/development.md)
 - [Operations](docs/operations.md)
 - [Releasing](docs/releasing.md)
