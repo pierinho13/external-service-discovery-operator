@@ -1,0 +1,210 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Verify Go modules
+        run: go mod verify
+
+      - name: Generate code and manifests
+        run: make generate manifests
+
+      - name: Format code
+        run: make fmt
+
+      - name: Run tests
+        run: make test
+
+      - name: Check generated and formatted files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          changes="$(git status --porcelain)"
+
+          if [[ -n "${changes}" ]]; then
+            echo "Generated or formatted files are not up to date."
+            echo
+            echo "Changed files:"
+            printf '%s\n' "${changes}"
+            echo
+            echo "Diff:"
+            git diff -- .
+            echo
+            echo "Run locally:"
+            echo
+            echo "  make generate manifests"
+            echo "  make fmt"
+            echo
+            echo "Then commit the generated changes."
+            exit 1
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          args: --timeout=5m
+
+  release-snapshot:
+    name: Validate Helm and release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    needs:
+      - test
+      - lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+
+      - name: Generate code and manifests
+        run: make generate manifests
+
+      - name: Format code
+        run: make fmt
+
+      - name: Verify generated files are committed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          changes="$(git status --porcelain)"
+
+          if [[ -n "${changes}" ]]; then
+            echo "The snapshot release produced uncommitted generated changes."
+            echo
+            printf '%s\n' "${changes}"
+            echo
+            git diff -- .
+            echo
+            echo "Run and commit:"
+            echo
+            echo "  make generate manifests"
+            echo "  make fmt"
+            exit 1
+          fi
+
+      - name: Validate and package Helm chart
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./hack/package-release-helm-chart.sh \
+            0.0.0-snapshot \
+            v0.0.0-snapshot
+
+      - name: Verify packaged Helm chart
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          chart="dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz"
+          rendered="$(mktemp)"
+
+          test -f "${chart}"
+          tar -tzf "${chart}"
+
+          helm template \
+            external-service-discovery-operator \
+            "${chart}" \
+            --namespace external-service-discovery-operator-system \
+            > "${rendered}"
+
+          grep -q 'discoveredservices/status' "${rendered}"
+          grep -q 'endpointslices' "${rendered}"
+          echo "DiscoveredService and EndpointSlice RBAC are present."
+
+      - name: Validate GoReleaser configuration
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: "~> v2"
+          args: check
+
+      - name: Run GoReleaser snapshot
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: "~> v2"
+          args: release --snapshot --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Publish release
+
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    needs:
+      - test
+      - lint
+      - release-snapshot
+
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+
+    uses: ./.github/workflows/release.yaml
+    secrets: inherit

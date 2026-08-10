@@ -1,0 +1,2 @@
+resources:
+- bases/discovery.k8sready.com_discoveredservices.yaml

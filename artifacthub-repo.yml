@@ -1,0 +1,5 @@
+---
+# Artifact Hub adds repositoryID when the OCI repository is registered.
+owners:
+  - name: pierinho13
+    email: pierinho13@gmail.com

@@ -1,0 +1,8 @@
+.git
+bin
+cover.out
+dist
+goreleaser-dist
+.idea
+.vscode
+.env

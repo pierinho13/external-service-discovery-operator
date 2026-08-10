@@ -1,0 +1,3 @@
+resources:
+- discovery_v1alpha1_discoveredservice.yaml
+- discovery_v1alpha1_discoveredservice_dns.yaml

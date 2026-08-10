@@ -1,0 +1,9 @@
+/bin/
+/cover.out
+/dist/
+/goreleaser-dist/
+/.idea/
+/.vscode/
+*.log
+.env
+.DS_Store
