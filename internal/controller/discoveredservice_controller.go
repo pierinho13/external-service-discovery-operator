@@ -44,6 +44,7 @@ type DiscoveredServiceReconciler struct {
 
 // +kubebuilder:rbac:groups=discovery.k8sready.com,resources=discoveredservices,verbs=get;list;watch
 // +kubebuilder:rbac:groups=discovery.k8sready.com,resources=discoveredservices/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch
 // +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices,verbs=get;list;watch;create;update;patch
 

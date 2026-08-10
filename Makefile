@@ -19,6 +19,7 @@ IMG ?= controller:latest
 all: build
 manifests: controller-gen
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd paths="./..." output:crd:artifacts:config=config/crd/bases
+	./hack/sync-helm-rbac.sh
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 fmt:
@@ -41,7 +42,9 @@ lint: golangci-lint
 chart-test: manifests
 	./hack/package-release-helm-chart.sh 0.0.0-snapshot v0.0.0-snapshot
 	helm lint dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz
-	helm template external-service-discovery-operator dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz --namespace external-service-discovery-operator-system >/dev/null
+	rendered="$$(mktemp)"; trap 'rm -f "$${rendered}"' EXIT; \
+		helm template external-service-discovery-operator dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz --namespace external-service-discovery-operator-system >"$${rendered}"; \
+		go run ./hack/verify-rbac config/rbac/role.yaml config/rbac/leader_election_role.yaml "$${rendered}"
 release-check: chart-test goreleaser
 	$(GORELEASER) check
 	$(GORELEASER) release --snapshot --clean

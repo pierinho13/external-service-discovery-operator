@@ -17,10 +17,95 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  generated-files:
+    name: Update generated files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    outputs:
+      changed: ${{ steps.generated.outputs.changed }}
+
+    steps:
+      - name: Checkout writable pull request branch
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GENERATED_FILES_TOKEN }}
+
+      - name: Checkout repository
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Generate code, manifests, and formatting
+        run: |
+          make generate
+          make manifests
+          make fmt
+
+      - name: Commit generated files or enforce fork consistency
+        id: generated
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "Generated files are current."
+            exit 0
+          fi
+
+          echo "Generation produced changes:"
+          git status --short
+          git diff -- .
+
+          if [[ "${EVENT_NAME}" != "pull_request" ]]; then
+            echo "Generated files are stale on ${EVENT_NAME}; refusing to modify this ref." >&2
+            exit 1
+          fi
+
+          if [[ "${HEAD_REPOSITORY}" != "${REPOSITORY}" ]]; then
+            echo "This pull request comes from a fork, so CI cannot push generated files safely." >&2
+            echo "Run 'make generate manifests', then 'make fmt', and commit the results." >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit --message "chore: update generated manifests"
+          git push origin "HEAD:${HEAD_REF}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
   test:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    needs:
+      - generated-files
+
+    if: needs.generated-files.outputs.changed != 'true'
 
     steps:
       - name: Checkout repository
@@ -74,6 +159,11 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
+    needs:
+      - generated-files
+
+    if: needs.generated-files.outputs.changed != 'true'
 
     steps:
       - name: Checkout repository
@@ -170,9 +260,7 @@ jobs:
             --namespace external-service-discovery-operator-system \
             > "${rendered}"
 
-          grep -q 'discoveredservices/status' "${rendered}"
-          grep -q 'endpointslices' "${rendered}"
-          echo "DiscoveredService and EndpointSlice RBAC are present."
+          go run ./hack/verify-rbac "${rendered}"
 
       - name: Validate GoReleaser configuration
         uses: goreleaser/goreleaser-action@v7

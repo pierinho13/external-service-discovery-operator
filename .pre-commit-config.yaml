@@ -123,8 +123,10 @@ repos:
               --namespace external-service-discovery-operator-system \
               > "${rendered}"
 
-            grep -q "discoveredservices/status" "${rendered}"
-            grep -q "endpointslices" "${rendered}"
+            go run ./hack/verify-rbac \
+              config/rbac/role.yaml \
+              config/rbac/leader_election_role.yaml \
+              "${rendered}"
             echo "Helm chart and operator RBAC are valid."
           '
         language: system
