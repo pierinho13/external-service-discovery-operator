@@ -80,6 +80,41 @@ func TestReconcileCreatesAndUpdatesNetworkingResources(t *testing.T) {
 	must(t, client.Delete(ctx, service))
 	mustReconcile(t, reconciler, ctx, request)
 	must(t, client.Get(ctx, request.NamespacedName, service))
+
+	assertEndpointSliceRecreationAndDrift(t, ctx, client, reconciler, request, resource, service, slice)
+}
+
+func assertEndpointSliceRecreationAndDrift(t *testing.T, ctx context.Context, client client.Client, reconciler *DiscoveredServiceReconciler, request ctrl.Request, resource *discoveryv1alpha1.DiscoveredService, service *corev1.Service, slice *discoveryv1.EndpointSlice) {
+	t.Helper()
+	// EndpointSlices are also recreated with their complete desired state.
+	must(t, client.Delete(ctx, slice))
+	mustReconcile(t, reconciler, ctx, request)
+	must(t, client.Get(ctx, request.NamespacedName, slice))
+	if slice.Labels[discoveryv1.LabelServiceName] != resource.Name || slice.Labels[discoveryv1.LabelManagedBy] != ManagedBy {
+		t.Fatalf("unexpected recreated EndpointSlice labels: %#v", slice.Labels)
+	}
+	assertOwner(t, slice.OwnerReferences, resource.UID)
+	if len(slice.Ports) != 1 || *slice.Ports[0].Name != "https" || *slice.Ports[0].Port != 9443 || len(slice.Endpoints) != 2 {
+		t.Fatalf("unexpected recreated EndpointSlice: %#v", slice)
+	}
+
+	// Drift in correctly owned children is restored to the declared and discovered state.
+	must(t, client.Get(ctx, request.NamespacedName, service))
+	service.Spec.Ports[0].Port = 9999
+	must(t, client.Update(ctx, service))
+	driftPort := int32(7777)
+	slice.Ports[0].Port = &driftPort
+	slice.Endpoints = []discoveryv1.Endpoint{{Addresses: []string{"192.0.2.1"}}}
+	must(t, client.Update(ctx, slice))
+	mustReconcile(t, reconciler, ctx, request)
+	must(t, client.Get(ctx, request.NamespacedName, service))
+	must(t, client.Get(ctx, request.NamespacedName, slice))
+	if service.Spec.Ports[0].Port != 8443 || *slice.Ports[0].Port != 9443 {
+		t.Fatalf("managed port drift was not restored: Service=%#v EndpointSlice=%#v", service.Spec.Ports, slice.Ports)
+	}
+	if len(slice.Endpoints) != 2 || slice.Endpoints[0].Addresses[0] != "10.140.0.11" || slice.Endpoints[1].Addresses[0] != "10.140.0.13" {
+		t.Fatalf("managed endpoint drift was not restored: %#v", slice.Endpoints)
+	}
 }
 
 func TestReconcileDoesNotAdoptExistingService(t *testing.T) {

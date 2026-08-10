@@ -124,9 +124,9 @@ spec:
                   type: object
                 minItems: 1
                 type: array
-                x-kubernetes-validations:
-                - message: port names must be unique
-                  rule: self.map(p, p.name).size() == self.size()
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
             required:
             - discovery
             - ports

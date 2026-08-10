@@ -57,7 +57,8 @@ type DiscoveredServicePort struct {
 type DiscoveredServiceSpec struct {
 	Discovery DiscoveryProvider `json:"discovery"`
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:XValidation:rule="self.map(p, p.name).size() == self.size()",message="port names must be unique"
+	// +listType=map
+	// +listMapKey=name
 	Ports []DiscoveredServicePort `json:"ports"`
 }
 
