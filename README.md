@@ -17,7 +17,8 @@ This Kubernetes operator discovers workloads running outside Kubernetes and proj
 
 The operator is a control plane only: it contains no proxy or data plane, performs no load balancing, and creates no ingress-controller-specific resources.
 
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9c6c6d43-ad66-4426-bf9b-4bc59a8038ed" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/2ad0d26c-acec-441f-9ca2-21662439ba95" />
+
 
 
 ⭐ Drop a star to support External Service Discovery Operator ⭐
