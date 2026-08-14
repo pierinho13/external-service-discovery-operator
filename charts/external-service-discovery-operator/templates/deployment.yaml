@@ -31,6 +31,7 @@ spec:
           args:
             - --health-probe-bind-address=:8081
             - {{ printf "--discovery-refresh-interval=%s" .Values.discovery.refreshInterval | quote }}
+            - {{ printf "--zap-log-level=%s" (.Values.log.level | lower) | quote }}
             {{- if .Values.leaderElection.enabled }}
             - --leader-elect
             {{- end }}
