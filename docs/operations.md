@@ -12,4 +12,13 @@ kubectl logs deployment/external-service-discovery-operator -n external-service-
 
 DNS resources refresh every minute by default. Configure `discovery.refreshInterval` in Helm values.
 
+Logging defaults to `INFO`. Set `log.level: DEBUG` in Helm values to log each
+reconciliation, discovery result, and endpoint health check, including its
+address, probe type, port, path, readiness result, counters, and duration.
+
+```yaml
+log:
+  level: DEBUG
+```
+
 Helm installs CRDs only on initial installation and does not upgrade or remove them automatically. Apply changed CRDs before upgrading a release that changes the schema.

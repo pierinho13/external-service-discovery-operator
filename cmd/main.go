@@ -35,7 +35,9 @@ func main() {
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "Health probe bind address.")
 	flag.BoolVar(&leaderElect, "leader-elect", false, "Enable leader election.")
 	flag.DurationVar(&discoveryRefreshInterval, "discovery-refresh-interval", time.Minute, "Refresh interval for dynamic discovery providers such as DNS.")
-	opts := zap.Options{Development: true}
+	// Production logging defaults to info. The Helm chart maps log.level to
+	// controller-runtime's --zap-log-level flag when debug output is needed.
+	opts := zap.Options{Development: false}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))

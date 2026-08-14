@@ -59,6 +59,8 @@ type endpointReadiness struct {
 // +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices,verbs=get;list;watch;create;update;patch
 
 func (r *DiscoveredServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx).WithValues("discoveredService", req.NamespacedName)
+	log.V(1).Info("starting reconciliation")
 	resource := &discoveryv1alpha1.DiscoveredService{}
 	if err := r.Get(ctx, req.NamespacedName, resource); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -67,6 +69,7 @@ func (r *DiscoveredServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		return r.fail(ctx, resource, "DiscoveryFailed", err)
 	}
+	log.V(1).Info("discovery completed", "endpointCount", len(discoveryResult.Endpoints), "providerRequeueAfter", discoveryResult.RequeueAfter)
 	endpoints, endpointHealth := r.evaluateHealth(ctx, resource, discoveryResult.Endpoints)
 	if err = r.reconcileService(ctx, resource); err != nil {
 		return r.fail(ctx, resource, failureReason(err), err)
@@ -83,6 +86,7 @@ func (r *DiscoveredServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if resource.Spec.HealthCheck != nil {
 		requeueAfter = shortestPositive(requeueAfter, healthcheck.Interval(resource.Spec.HealthCheck))
 	}
+	log.V(1).Info("reconciliation completed", "endpointCount", total, "readyEndpointCount", ready, "requeueAfter", requeueAfter)
 	return ctrl.Result{RequeueAfter: requeueAfter}, nil
 }
 
@@ -106,6 +110,7 @@ func (r *DiscoveredServiceReconciler) evaluateHealth(ctx context.Context, resour
 	for _, endpoint := range found {
 		status := previous[endpoint.Address]
 		status.Address = endpoint.Address
+		probeStarted := time.Now()
 		result := checker.Check(ctx, endpoint.Address, resource.Spec.HealthCheck)
 		if result.Healthy {
 			status.ConsecutiveFailures = 0
@@ -121,6 +126,18 @@ func (r *DiscoveredServiceReconciler) evaluateHealth(ctx context.Context, resour
 			}
 		}
 		status.Reason, status.Message, status.LastCheckedAt = result.Reason, result.Message, metav1.Now()
+		ctrl.LoggerFrom(ctx).V(1).Info("health check completed",
+			"address", endpoint.Address,
+			"type", resource.Spec.HealthCheck.Type,
+			"port", resource.Spec.HealthCheck.Port,
+			"path", resource.Spec.HealthCheck.Path,
+			"probeHealthy", result.Healthy,
+			"endpointReady", status.Healthy,
+			"reason", result.Reason,
+			"consecutiveSuccesses", status.ConsecutiveSuccesses,
+			"consecutiveFailures", status.ConsecutiveFailures,
+			"duration", time.Since(probeStarted),
+		)
 		statuses = append(statuses, status)
 		endpoints = append(endpoints, endpointReadiness{Address: endpoint.Address, Ready: status.Healthy})
 	}
