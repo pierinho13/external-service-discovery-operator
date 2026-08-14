@@ -44,6 +44,8 @@ chart-test: manifests
 	helm lint dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz
 	rendered="$$(mktemp)"; trap 'rm -f "$${rendered}"' EXIT; \
 		helm template external-service-discovery-operator dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz --namespace external-service-discovery-operator-system >"$${rendered}"; \
+		grep -q -- '--zap-log-level=info' "$${rendered}"; \
+		helm template external-service-discovery-operator dist/helm/external-service-discovery-operator-0.0.0-snapshot.tgz --namespace external-service-discovery-operator-system --set log.level=DEBUG | grep -q -- '--zap-log-level=debug'; \
 		go run ./hack/verify-rbac config/rbac/role.yaml config/rbac/leader_election_role.yaml "$${rendered}"
 release-check: chart-test goreleaser
 	$(GORELEASER) check

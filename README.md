@@ -155,6 +155,8 @@ spec:
 
 Discovered addresses stay present in the `EndpointSlice`, but unhealthy endpoints have `conditions.ready=false` and `conditions.serving=false`. A new endpoint starts not ready until it reaches `successThreshold`; a healthy endpoint is marked not ready only after `failureThreshold` consecutive failures. The operator records aggregate counts and per-address results under `status`, and health checks run independently from the DNS refresh interval.
 
+Logging defaults to `INFO`. Set `log.level: DEBUG` in Helm values to trace reconciliations, discovery results, and individual endpoint health checks. See [Operations](docs/operations.md) for details.
+
 ## Why not just use ExternalName?
 
 `ExternalName` and `DiscoveredService` solve related but different problems. An `ExternalName` Service exposes a DNS alias and leaves name resolution to consumers. This operator resolves DNS itself and represents the resulting IPv4 addresses as a selectorless Service plus a Kubernetes `EndpointSlice`.

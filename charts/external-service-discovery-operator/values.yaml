@@ -16,6 +16,8 @@ leaderElection:
   enabled: true
 discovery:
   refreshInterval: 1m
+log:
+  level: INFO
 podAnnotations: {}
 podLabels: {}
 podSecurityContext:
