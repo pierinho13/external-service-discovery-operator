@@ -103,6 +103,22 @@ func TestDiscoveredServiceIntegration(t *testing.T) {
 		if err := k8sClient.Create(ctx, duplicatePorts); err == nil || !apierrors.IsInvalid(err) {
 			t.Fatalf("expected duplicate port name rejection, got %v", err)
 		}
+
+		validTCP := validResource("valid-tcp-health", namespace.Name)
+		validTCP.Spec.HealthCheck = &discoveryv1alpha1.HealthCheck{Type: discoveryv1alpha1.HealthCheckTypeTCP, Port: 8080}
+		must(t, k8sClient.Create(ctx, validTCP))
+
+		invalidTCP := validResource("invalid-tcp-health", namespace.Name)
+		invalidTCP.Spec.HealthCheck = &discoveryv1alpha1.HealthCheck{Type: discoveryv1alpha1.HealthCheckTypeTCP, Port: 8080, Path: "/health"}
+		if err := k8sClient.Create(ctx, invalidTCP); err == nil || !apierrors.IsInvalid(err) {
+			t.Fatalf("expected TCP path rejection, got %v", err)
+		}
+
+		invalidStatus := validResource("invalid-health-status", namespace.Name)
+		invalidStatus.Spec.HealthCheck = &discoveryv1alpha1.HealthCheck{Type: discoveryv1alpha1.HealthCheckTypeHTTP, Port: 8080, ExpectedStatuses: []int32{99}}
+		if err := k8sClient.Create(ctx, invalidStatus); err == nil || !apierrors.IsInvalid(err) {
+			t.Fatalf("expected invalid HTTP status rejection, got %v", err)
+		}
 	})
 
 	t.Run("CRD accepts DNS and enforces exactly one provider", func(t *testing.T) {

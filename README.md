@@ -134,6 +134,27 @@ EndpointSlice: 10.140.0.11, 10.140.0.12, 10.140.0.13
 
 Unlike an `ExternalName` Service, which delegates resolution to each DNS client, this operator resolves names and materializes every discovered address into an EndpointSlice. DNS resources refresh every minute by default; configure the controller-wide period with `--discovery-refresh-interval`. If any name fails or produces no usable IPv4 address, discovery fails closed: the existing EndpointSlice and its endpoint count remain unchanged while `Ready=False` reports `DiscoveryFailed`.
 
+## Optional active health checks
+
+An optional health check can evaluate every discovered address independently. Without this field, all discovered endpoints remain ready exactly as in previous releases.
+
+```yaml
+spec:
+  healthCheck:
+    type: HTTP
+    port: 8080
+    path: /healthz
+    expectedStatuses: [200]
+    interval: 10s
+    timeout: 3s
+    successThreshold: 1
+    failureThreshold: 3
+```
+
+`HTTP` and `HTTPS` checks issue a GET request to each address; `host` optionally controls the HTTP Host header and HTTPS TLS server name. `TCP` checks only establish a connection and therefore reject `path`, `host`, and `expectedStatuses`.
+
+Discovered addresses stay present in the `EndpointSlice`, but unhealthy endpoints have `conditions.ready=false` and `conditions.serving=false`. A new endpoint starts not ready until it reaches `successThreshold`; a healthy endpoint is marked not ready only after `failureThreshold` consecutive failures. The operator records aggregate counts and per-address results under `status`, and health checks run independently from the DNS refresh interval.
+
 ## Why not just use ExternalName?
 
 `ExternalName` and `DiscoveredService` solve related but different problems. An `ExternalName` Service exposes a DNS alias and leaves name resolution to consumers. This operator resolves DNS itself and represents the resulting IPv4 addresses as a selectorless Service plus a Kubernetes `EndpointSlice`.
@@ -161,11 +182,9 @@ External Service Discovery Operator is intentionally focused on one thing: keepi
 It does not provide:
 
 - Traffic proxying or load balancing
-- Active health checks
 - Service mesh functionality
 - Cloud inventory discovery by labels or tags
 - Ingress, Traefik, or Gateway API resource management
 - VM agents or sidecars
 
 The operator stays in the control plane and leaves traffic handling to Kubernetes consumers such as Traefik, Gateway API implementations, or applications using the generated `Service`.
-

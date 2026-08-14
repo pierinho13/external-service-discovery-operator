@@ -14,3 +14,11 @@ spec:
   - name: http
     port: 8080
     protocol: TCP
+  healthCheck:
+    type: HTTP
+    port: 8080
+    path: /healthz
+    interval: 10s
+    timeout: 3s
+    successThreshold: 1
+    failureThreshold: 3
