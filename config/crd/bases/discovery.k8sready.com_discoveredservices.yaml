@@ -23,6 +23,9 @@ spec:
     - jsonPath: .status.endpointCount
       name: Endpoints
       type: integer
+    - jsonPath: .status.readyEndpointCount
+      name: Healthy
+      type: integer
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -86,6 +89,61 @@ spec:
                 x-kubernetes-validations:
                 - message: exactly one of static or dns must be configured
                   rule: has(self.static) != has(self.dns)
+              healthCheck:
+                description: HealthCheck configures active readiness checks for every
+                  discovered address.
+                properties:
+                  expectedStatuses:
+                    items:
+                      format: int32
+                      maximum: 599
+                      minimum: 100
+                      type: integer
+                    minItems: 1
+                    type: array
+                  failureThreshold:
+                    default: 3
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  host:
+                    description: Host is the optional HTTP Host header and HTTPS TLS
+                      server name.
+                    type: string
+                  interval:
+                    default: 10s
+                    type: string
+                  path:
+                    pattern: ^/
+                    type: string
+                  port:
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                  successThreshold:
+                    default: 1
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  timeout:
+                    default: 3s
+                    type: string
+                  type:
+                    enum:
+                    - HTTP
+                    - HTTPS
+                    - TCP
+                    type: string
+                required:
+                - port
+                - type
+                type: object
+                x-kubernetes-validations:
+                - message: path, host and expectedStatuses are only valid for HTTP
+                    and HTTPS health checks
+                  rule: 'self.type == ''TCP'' ? !has(self.path) && !has(self.host)
+                    && !has(self.expectedStatuses) : true'
               ports:
                 items:
                   description: DiscoveredServicePort is a port projected onto the
@@ -193,8 +251,41 @@ spec:
               endpointCount:
                 format: int32
                 type: integer
+              endpointHealth:
+                items:
+                  description: EndpointHealthStatus contains persisted readiness for
+                    one address.
+                  properties:
+                    address:
+                      type: string
+                    consecutiveFailures:
+                      format: int32
+                      type: integer
+                    consecutiveSuccesses:
+                      format: int32
+                      type: integer
+                    healthy:
+                      type: boolean
+                    lastCheckedAt:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    reason:
+                      type: string
+                  required:
+                  - address
+                  - healthy
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - address
+                x-kubernetes-list-type: map
               observedGeneration:
                 format: int64
+                type: integer
+              readyEndpointCount:
+                format: int32
                 type: integer
               serviceName:
                 type: string

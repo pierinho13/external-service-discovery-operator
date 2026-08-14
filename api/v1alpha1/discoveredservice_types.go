@@ -5,6 +5,49 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type HealthCheckType string
+
+const (
+	HealthCheckTypeHTTP  HealthCheckType = "HTTP"
+	HealthCheckTypeHTTPS HealthCheckType = "HTTPS"
+	HealthCheckTypeTCP   HealthCheckType = "TCP"
+)
+
+// HealthCheck configures active readiness checks for every discovered address.
+// +kubebuilder:validation:XValidation:rule="self.type == 'TCP' ? !has(self.path) && !has(self.host) && !has(self.expectedStatuses) : true",message="path, host and expectedStatuses are only valid for HTTP and HTTPS health checks"
+type HealthCheck struct {
+	// +kubebuilder:validation:Enum=HTTP;HTTPS;TCP
+	Type HealthCheckType `json:"type"`
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port"`
+	// +optional
+	// +kubebuilder:validation:Pattern=`^/`
+	Path string `json:"path,omitempty"`
+	// Host is the optional HTTP Host header and HTTPS TLS server name.
+	// +optional
+	Host string `json:"host,omitempty"`
+	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:items:Minimum=100
+	// +kubebuilder:validation:items:Maximum=599
+	ExpectedStatuses []int32 `json:"expectedStatuses,omitempty"`
+	// +optional
+	// +kubebuilder:default="10s"
+	Interval metav1.Duration `json:"interval,omitempty"`
+	// +optional
+	// +kubebuilder:default="3s"
+	Timeout metav1.Duration `json:"timeout,omitempty"`
+	// +optional
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Minimum=1
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	// +optional
+	// +kubebuilder:default=3
+	// +kubebuilder:validation:Minimum=1
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
+}
+
 // StaticDiscovery contains fixed IPv4 addresses. Other providers will be added later.
 type StaticDiscovery struct {
 	// Addresses are IPv4 addresses of external workloads.
@@ -60,15 +103,33 @@ type DiscoveredServiceSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	Ports []DiscoveredServicePort `json:"ports"`
+	// +optional
+	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
+}
+
+// EndpointHealthStatus contains persisted readiness for one address.
+type EndpointHealthStatus struct {
+	Address              string      `json:"address"`
+	Healthy              bool        `json:"healthy"`
+	ConsecutiveSuccesses int32       `json:"consecutiveSuccesses,omitempty"`
+	ConsecutiveFailures  int32       `json:"consecutiveFailures,omitempty"`
+	Reason               string      `json:"reason,omitempty"`
+	Message              string      `json:"message,omitempty"`
+	LastCheckedAt        metav1.Time `json:"lastCheckedAt,omitempty"`
 }
 
 // DiscoveredServiceStatus describes the last completed reconciliation.
 type DiscoveredServiceStatus struct {
 	ObservedGeneration int64  `json:"observedGeneration,omitempty"`
 	EndpointCount      int32  `json:"endpointCount,omitempty"`
+	ReadyEndpointCount int32  `json:"readyEndpointCount,omitempty"`
 	ServiceName        string `json:"serviceName,omitempty"`
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +optional
+	// +listType=map
+	// +listMapKey=address
+	EndpointHealth []EndpointHealthStatus `json:"endpointHealth,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -76,6 +137,7 @@ type DiscoveredServiceStatus struct {
 // +kubebuilder:resource:scope=Namespaced,shortName=dsvc
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Endpoints",type="integer",JSONPath=".status.endpointCount"
+// +kubebuilder:printcolumn:name="Healthy",type="integer",JSONPath=".status.readyEndpointCount"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type DiscoveredService struct {
 	metav1.TypeMeta   `json:",inline"`
