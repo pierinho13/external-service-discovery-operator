@@ -17,7 +17,7 @@ spec:
   healthCheck:
     type: HTTP
     port: 8080
-    path: /estasbien
+    path: /healthz
     interval: 10s
     timeout: 3s
     successThreshold: 1

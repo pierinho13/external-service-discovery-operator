@@ -23,7 +23,7 @@ func TestNetworkCheckerHTTP(t *testing.T) {
 		healthy    bool
 		reason     string
 	}{
-		{name: "default 200", path: "/estasbien", status: http.StatusOK, healthy: true, reason: "ProbeSucceeded"},
+		{name: "default 200", path: "/healthz", status: http.StatusOK, healthy: true, reason: "ProbeSucceeded"},
 		{name: "unexpected status", path: "/failing", status: http.StatusServiceUnavailable, healthy: false, reason: "UnexpectedStatus"},
 		{name: "configured status", path: "/accepted", status: http.StatusNoContent, expected: []int32{http.StatusNoContent}, healthy: true, reason: "ProbeSucceeded"},
 	}

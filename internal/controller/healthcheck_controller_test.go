@@ -36,7 +36,7 @@ func TestHealthChecksPersistThresholdsAndEndpointReadiness(t *testing.T) {
 	resource.Spec.HealthCheck = &discoveryv1alpha1.HealthCheck{
 		Type:             discoveryv1alpha1.HealthCheckTypeHTTP,
 		Port:             8080,
-		Path:             "/estasbien",
+		Path:             "/healthz",
 		FailureThreshold: 2,
 		SuccessThreshold: 1,
 		Interval:         metav1.Duration{Duration: 7 * time.Second},
